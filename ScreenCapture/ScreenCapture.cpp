@@ -81,7 +81,7 @@ void ConfigureEncodeParams(mfxVideoParam & conf) {
 	conf.mfx.FrameInfo.FourCC = MFX_FOURCC_NV12;
 	conf.mfx.FrameInfo.PicStruct = MFX_PICSTRUCT_PROGRESSIVE;
 	conf.mfx.FrameInfo.ChromaFormat = MFX_CHROMAFORMAT_YUV420;
-	conf.mfx.FrameInfo.FrameRateExtN = 4; // FrameRate is N/D, 4 is the minimal for ffplay
+	conf.mfx.FrameInfo.FrameRateExtN = 2; // FrameRate is N/D, 4 is the minimal for ffplay
 	conf.mfx.FrameInfo.FrameRateExtD = 1;
 }
 
@@ -151,43 +151,42 @@ void Intel() {
 
 
 	int idx = 0;
-	for (;;) {  
+
+	std::ofstream outputFile;
+	outputFile.open("d:\\Idei\\POC\\ScreenCapture\\x64\\Debug\\res.h264", std::ofstream::binary);
+	if (outputFile.fail()) {
+		std::cout << strerror(errno) << std::endl;
+		return;
+	}
+
+	for (;idx<5;) {  
 		//find_unlocked_surface_from_the_pool(&work);  
 		res=MFXVideoDECODE_DecodeFrameAsync(session, NULL, pmfxSurfacesEncode[idx], &outSurface, &syncp);  
 		if (res==MFX_ERR_MORE_SURFACE) continue;  
 		idx++;
 
-		if (res==MFX_ERR_NONE) {   
-			//res = MFXVideoCORE_SyncOperation(session, syncp, -1);
+		if (res == MFX_ERR_NONE) {
+			res = MFXVideoCORE_SyncOperation(session, syncp, -1);
 			//ProcessFrame(outSurface);
 
-			mfxStatus encodeStat = MFX_ERR_MORE_DATA;
-			/*while (encodeStat != MFX_ERR_NONE) */{
-				res = MFXVideoENCODE_EncodeFrameAsync(session, NULL, outSurface, &stream, &syncpEncode);
-				//no more frame
+			res = MFXVideoENCODE_EncodeFrameAsync(session, NULL, outSurface, &stream, &syncpEncode);
+			//no more frame
+			if (res == MFX_ERR_MORE_DATA)
+			{
 				res = MFXVideoENCODE_EncodeFrameAsync(session, NULL, NULL, &stream, &syncpEncode);
-				encodeStat = res;
-				if (res != MFX_ERR_MORE_DATA) {
+			}
+			if (res != MFX_ERR_MORE_DATA){
 
-					res = MFXVideoCORE_SyncOperation(session, syncpEncode, -1);
+				res = MFXVideoCORE_SyncOperation(session, syncpEncode, -1);
 
-					std::ofstream outputFile;
-					outputFile.open("d:\\Idei\\POC\\ScreenCapture\\x64\\Debug\\res.h264", std::ofstream::binary);
-					if (!outputFile.fail()) {
-						outputFile.write(reinterpret_cast<char*>(stream.Data), stream.DataLength);
-					}
-					else {
-						std::cout << strerror(errno) << std::endl;
-					}
-					outputFile.close();
-					idx = 0;
-					break;
-				}
+				outputFile.write(reinterpret_cast<char*>(stream.Data), stream.DataLength);
 			}
 		}
 
-		std::this_thread::sleep_for(std::chrono::seconds(10));
+		std::this_thread::sleep_for(std::chrono::seconds(2));
 	} 
+
+	outputFile.close();
 	MFXVideoDECODE_Close(session); 
 	MFXVideoENCODE_Close(session);
 	//free_pool_of_frame_surfaces(); 

@@ -101,13 +101,13 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>c:\Program Files\Intel\Intel(R) Media Server Studio 2017 R3\Software Development Kit\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>D:\Idei\POC\ScreenCapture\lib\ffmpeg\include;c:\Program Files\Intel\Intel(R) Media Server Studio 2017 R3\Software Development Kit\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>c:\Program Files\Intel\Intel(R) Media Server Studio 2017 R3\Software Development Kit\lib\x64\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>libmfx_vs2015.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>D:\Idei\POC\ScreenCapture\lib\ffmpeg\lib;c:\Program Files\Intel\Intel(R) Media Server Studio 2017 R3\Software Development Kit\lib\x64\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>libmfx_vs2015.lib;avcodec.lib;avformat.lib;avutil.lib;swscale.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -148,11 +148,16 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="FFMpegVideoEncoder.h" />
+    <ClInclude Include="GDICapture.h" />
     <ClInclude Include="Screen2File.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
+    <ClInclude Include="TimeUtility.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="FFMpegVideoEncoder.cpp" />
+    <ClCompile Include="GDICapture.cpp" />
     <ClCompile Include="Screen2File.cpp" />
     <ClCompile Include="ScreenCapture.cpp" />
     <ClCompile Include="stdafx.cpp">
@@ -161,6 +166,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="TimeUtility.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

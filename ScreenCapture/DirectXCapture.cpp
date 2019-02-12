@@ -38,11 +38,20 @@ void DirectXCapture::StartCapture()
 		throw std::runtime_error("Unable to Create Direct3D ");
 	}
 
+	//for (int m = 0; m < pD3D-> GetAdapterModeCount(D3DADAPTER_DEFAULT, D3DFMT_X8R8G8B8); m++) {
+	//	pD3D->EnumAdapterModes(D3DADAPTER_DEFAULT, D3DFMT_X8R8G8B8, m, &mode);
+	//}
+
+
+
 	// init D3D and get screen size
 	auto res = pD3D->GetAdapterDisplayMode(D3DADAPTER_DEFAULT, &mode);
 	if (res != D3D_OK) {
 		throw std::runtime_error("GetAdapterDisplayMode:" + std::to_string(res));
 	}
+
+	//mode.Height = nScreenHeight;
+	//mode.Width = nScreenWidth;
 
 	parameters.Windowed = TRUE;
 	parameters.BackBufferCount = 1;

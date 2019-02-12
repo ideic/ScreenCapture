@@ -49,11 +49,11 @@ void FFMpegVideoEncoder::Init(int width, int height, int fpsrate, int bitrate, s
 	_videoStream->codecpar->width = width;
 	_videoStream->codecpar->height = height;
 	_videoStream->codecpar->format = AV_PIX_FMT_YUV420P;
-	_videoStream->codecpar->bit_rate = bitrate; //* 1000;
+	_videoStream->codecpar->bit_rate = bitrate * 1000;
 	
 	AVRational timeBase;
-	timeBase.den = 1;
-	timeBase.num = _fps;
+	timeBase.den = _fps;
+	timeBase.num = 1;
 	_videoStream->time_base = timeBase;
 
 	avcodec_parameters_to_context(_codecCtx, _videoStream->codecpar);
@@ -104,7 +104,7 @@ void FFMpegVideoEncoder::AddFrame(uint8_t * data)
 	}
 
 	if (!_swsCtx) {
-		_swsCtx = sws_getContext(_codecCtx->width, _codecCtx->height, AV_PIX_FMT_RGB24, _codecCtx->width, _codecCtx->height, AV_PIX_FMT_YUV420P, SWS_BICUBIC, 0, 0, 0); 
+		_swsCtx = sws_getContext(_codecCtx->width, _codecCtx->height, AV_PIX_FMT_RGB24, _codecCtx->width, _codecCtx->height, AV_PIX_FMT_YUV420P, SWS_BICUBIC, 0, 0, 0);  //AV_PIX_FMT_RGB24
 	}
 
 	int inLinesize[1] = { 3 * _codecCtx->width };

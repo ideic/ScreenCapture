@@ -49,7 +49,7 @@ void FFMpegVideoEncoder::Init(int width, int height, int fpsrate, int bitrate, s
 	_videoStream->codecpar->width = width;
 	_videoStream->codecpar->height = height;
 	_videoStream->codecpar->format = AV_PIX_FMT_YUV420P;
-	_videoStream->codecpar->bit_rate = bitrate * 1000;
+	_videoStream->codecpar->bit_rate = bitrate; //* 1000;
 	
 	AVRational timeBase;
 	timeBase.den = 1;

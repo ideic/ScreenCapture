@@ -20,10 +20,12 @@ void GDICapture::StartCapture()
 
 	_encoder.Init(nScreenWidth, nScreenHeight, _frameRate, nScreenWidth * nScreenHeight * _frameRate / 60, _output);
 
+	auto screenCaptureTime = (1000 / _frameRate);
 	while (!_terminate)
 	{
 		TimeUtility time;
-		std::cout << "Frame Start: " << time.Now() << std::endl;
+		auto  now = std::chrono::system_clock().now();
+		std::cout << time.Now() << " Frame Start " << std::endl;
 
 		HWND hDesktopWnd = GetDesktopWindow();
 		HDC hDesktopDC = GetDC(hDesktopWnd);
@@ -32,17 +34,28 @@ void GDICapture::StartCapture()
 		SelectObject(hCaptureDC, hCaptureBitmap);
 		BitBlt(hCaptureDC, 0, 0, nScreenWidth, nScreenHeight, hDesktopDC, 0, 0, SRCCOPY | CAPTUREBLT);
 
+		std::cout << time.Since(now) << " Screen shot done. Start Encode " << std::endl;
 		//SaveBitmap(hCaptureBitmap);
 
-		_encoder.AddFrame(GetBitMap(hCaptureBitmap).data());
+		auto bitmap = GetBitMap(hCaptureBitmap);
+		std::cout << time.Since(now) << "Screen shot transcoded" << std::endl;
+
+		_encoder.AddFrame(bitmap.data());
+
+		std::cout << time.Since(now) << " Encode Done " << std::endl;
 
 		ReleaseDC(hDesktopWnd, hDesktopDC);
 		DeleteDC(hCaptureDC);
 		DeleteObject(hCaptureBitmap);
 
-		std::cout << "Frame Finished: " << time.Now() << std::endl;
+		std::cout << time.Since(now) << " Frame Finished " << std::endl;
 
-		std::this_thread::sleep_for(std::chrono::milliseconds(1000 / _frameRate));
+		auto now2 = std::chrono::system_clock().now();
+		auto elapsedTime = std::chrono::duration_cast<std::chrono::milliseconds>(now2 - now).count();
+		if (elapsedTime < screenCaptureTime) {
+			std::this_thread::sleep_for(std::chrono::milliseconds(screenCaptureTime - elapsedTime));
+			std::cout << "Waited:" << std::to_string(screenCaptureTime - elapsedTime)<<std::endl;
+		}
 	}
 
 	_encoder.Finish();
@@ -147,14 +160,15 @@ std::vector<uint8_t> GDICapture::GetBitMap(HBITMAP hBitmap)
 		auto begin = reinterpret_cast<uint8_t*>(pBuf) + bmpInfo.bmiHeader.biWidth * 4 * (y - 1) ;
 
 		for (auto x = 0; x < bmpInfo.bmiHeader.biWidth; x++) {
-			auto b = *(begin + 4 * x ); // g         -- reserved
-			auto g = *(begin + (4 * x) + 1); // r      -- b 
-			auto r = *(begin + (4 * x) + 2);//		 -- g
-			auto reserved = *(begin + (4 * x )+ 3); //b --
+			auto shift = 4 * x;
+			auto b = begin + shift; // g         -- reserved
+			auto g = begin + shift+ 1; // r      -- b 
+			auto r = begin + shift+ 2;//		 -- g
+			//auto reserved = *(begin + (4 * x )+ 3); //b --
 			
-			result.push_back(r); 
-			result.push_back(g); 
-			result.push_back(b); 
+			result.push_back(*r); 
+			result.push_back(*g); 
+			result.push_back(*b); 
 
 		}
 	}

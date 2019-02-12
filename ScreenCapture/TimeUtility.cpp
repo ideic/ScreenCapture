@@ -1,6 +1,5 @@
 #include "stdafx.h"
 #include "TimeUtility.h"
-#include <chrono>
 #include <locale>
 #include <codecvt>
 #include <sstream>
@@ -30,4 +29,12 @@ std::string TimeUtility::Now()
 	oss << std::put_time(&localTime, "%Y.%m.%d %H:%M:%S.") << fractional_seconds;
 	return oss.str();
 
+}
+
+std::string TimeUtility::Since(std::chrono::time_point<std::chrono::system_clock> since)
+{
+	auto now = std::chrono::system_clock::now();
+	auto millisec = std::chrono::duration_cast<std::chrono::milliseconds>(now-since).count();
+
+	return std::to_string(millisec);
 }

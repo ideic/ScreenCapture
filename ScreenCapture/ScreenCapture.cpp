@@ -42,5 +42,8 @@ int main()
 
 	//Intel(framrate, output);
 	GDI(framrate, output);
+
+	std::cout << "Finished" << std::endl;
+	std::cin.ignore();
 	return 0;
 }

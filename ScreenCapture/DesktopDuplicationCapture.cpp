@@ -320,6 +320,8 @@ void DesktopDuplicationCapture::StartCapture()
 			std::cout << "Waited:" << std::to_string(screenCaptureTime - elapsedTime) << std::endl;
 		}
 
+		hr = m_DeskDupl->ReleaseFrame();
+
 		m_AcquiredDesktopImage->Release();
 		m_AcquiredDesktopImage = nullptr;
 	}
@@ -351,15 +353,15 @@ std::vector<uint8_t> DesktopDuplicationCapture::GetData(uint8_t* data, uint16_t 
 		}
 	}
 
-	std::ofstream dump;
-	dump.open("d:\\Idei\\POC\\ScreenCapture\\output\\result_DD.h264.dump", std::ofstream::binary);
-	if (dump.fail()) {
-		std::cout << strerror(errno) << std::endl;
-		return result;
-	}
+	//std::ofstream dump;
+	//dump.open("d:\\Idei\\POC\\ScreenCapture\\output\\result_DD.h264.dump", std::ofstream::binary);
+	//if (dump.fail()) {
+	//	std::cout << strerror(errno) << std::endl;
+	//	return result;
+	//}
 
-	dump.write(reinterpret_cast<char*>(data), width * height * 3);
-	dump.close();
+	//dump.write(reinterpret_cast<char*>(data), width * height * 3);
+	//dump.close();
 
 	return result;
 }

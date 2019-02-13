@@ -7,6 +7,7 @@
 #include "Screen2File.h"
 #include "GDICapture.h"
 #include "DirectXCapture.h"
+#include "DesktopDuplicationCapture.h"
 
 void Intel(int frameRate)
 {
@@ -39,6 +40,20 @@ void GDI(int frameRate)
 	t1.join();
 }
 
+void DesktopDuplication(int frameRate) {
+	std::string output = "d:\\Idei\\POC\\ScreenCapture\\output\\result_DD.h264";
+
+	DesktopDuplicationCapture capture(frameRate, output);
+
+	auto t1 = std::thread([&capture]() {
+		capture.StartCapture();
+	});
+
+	std::cout << "Press any key to finish" << std::endl;
+	std::cin.ignore();
+	capture.StopCapture();
+	t1.join();
+}
 
 void DirectX(int frameRate)
 {
@@ -63,7 +78,8 @@ int main()
 	//Intel(framrate, output);
 	//GDI(framrate);
 
-	DirectX(framrate);
+	//DirectX(framrate);
+	DesktopDuplication(framrate);
 
 	std::cout << "Finished" << std::endl;
 	std::cin.ignore();

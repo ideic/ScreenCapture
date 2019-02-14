@@ -265,11 +265,72 @@ void DesktopDuplicationCapture::StartCapture()
 		hr = m_DeskDupl->MapDesktopSurface(&lockedRect);
 
 
-		std::vector<uint8_t> transcodedData;
-
 		if (DXGI_ERROR_UNSUPPORTED == hr) {
 			
 			
+			/*****************************************FOR MOUSE CURSOR*****************************/
+
+			// Create GUI drawing texture
+
+			D3D11_TEXTURE2D_DESC desc;
+
+			desc.Width = m_AcquiredDesktopImageDesc.Width;
+
+			desc.Height = m_AcquiredDesktopImageDesc.Height;
+
+			desc.Format = m_AcquiredDesktopImageDesc.Format;
+
+			desc.ArraySize = 1;
+
+			desc.BindFlags = D3D11_BIND_FLAG::D3D11_BIND_RENDER_TARGET;
+
+			desc.MiscFlags = D3D11_RESOURCE_MISC_GDI_COMPATIBLE; // IMPORTANT
+
+			desc.SampleDesc.Count = 1;
+
+			desc.SampleDesc.Quality = 0;
+
+			desc.MipLevels = 1;
+
+			desc.CPUAccessFlags = 0;
+
+			desc.Usage = D3D11_USAGE_DEFAULT; // We are still in the GPU
+
+			ID3D11Texture2D *lGDIImage;
+
+			hr = device->CreateTexture2D(&desc, NULL, &lGDIImage);
+
+			deviceContext->CopyResource(lGDIImage, m_AcquiredDesktopImage);
+
+			//Cursor draw with GDI
+			IDXGISurface1 * lIDXGISurface1;
+			hr = lGDIImage->QueryInterface(IID_PPV_ARGS(&lIDXGISurface1));
+
+			if (FAILED(hr)) {
+				break;
+			}
+
+			CURSORINFO cursor = { sizeof(cursor) };
+			::GetCursorInfo(&cursor);
+			if (cursor.flags == CURSOR_SHOWING) {
+
+				ICONINFOEXW info = { sizeof(info) };
+				::GetIconInfoExW(cursor.hCursor, &info);
+				const int x = cursor.ptScreenPos.x - info.xHotspot;
+				const int y = cursor.ptScreenPos.y - info.yHotspot;
+
+				BITMAP bmpCursor = { 0 };
+				::GetObject(info.hbmColor, sizeof(bmpCursor), &bmpCursor);
+
+				HDC  lHDC;
+				hr = lIDXGISurface1->GetDC(FALSE, &lHDC);
+				DrawIconEx(lHDC, x, y, cursor.hCursor, bmpCursor.bmWidth, bmpCursor.bmHeight, 0, NULL, DI_NORMAL | DI_DEFAULTSIZE);
+
+				lIDXGISurface1->ReleaseDC(nullptr);
+			}
+
+
+			/*************************************************************************************/
 			ID3D11Texture2D *texture = nullptr;
 			D3D11_MAPPED_SUBRESOURCE resource;
 
@@ -288,23 +349,26 @@ void DesktopDuplicationCapture::StartCapture()
 
 			hr = device->CreateTexture2D(&textdesc, nullptr, &texture);
 
-			deviceContext->CopyResource(texture, m_AcquiredDesktopImage);
+			deviceContext->CopyResource(texture, lGDIImage);
+
 
 			//UINT subresource = D3D11CalcSubresource(0, 0 ,0);
 			hr = deviceContext->Map(texture, 0, D3D11_MAP_READ, 0, &resource);
 
 			std::cout << time.Since(now) << " Transcode start " << std::endl;
-			transcodedData = GetData(reinterpret_cast<uint8_t*>(resource.pData), m_AcquiredDesktopImageDesc.Height, m_AcquiredDesktopImageDesc.Width);
+			SetScreenShotData(reinterpret_cast<uint8_t*>(resource.pData), m_AcquiredDesktopImageDesc.Height, m_AcquiredDesktopImageDesc.Width);
 			deviceContext->Unmap(texture, 0);
+
+			texture->Release();
 		}
 		else {
 			std::cout << time.Since(now) << " Transcode start " << std::endl;
-			transcodedData = GetData(lockedRect.pBits, m_AcquiredDesktopImageDesc.Height, m_AcquiredDesktopImageDesc.Width);
+			SetScreenShotData(lockedRect.pBits, m_AcquiredDesktopImageDesc.Height, m_AcquiredDesktopImageDesc.Width);
 			m_DeskDupl->UnMapDesktopSurface();
 		}
 
 		std::cout << time.Since(now) << "Transcode End. Encode Start " << std::endl;
-		_encoder.AddFrame(transcodedData.data());
+		_encoder.AddFrame(screenShotData.data());
 
 
 		//free(pBits);
@@ -312,6 +376,11 @@ void DesktopDuplicationCapture::StartCapture()
 		std::cout << time.Since(now) << " Encode Done " << std::endl;
 
 		std::cout << time.Since(now) << " Frame Finished " << std::endl;
+		
+		hr = m_DeskDupl->ReleaseFrame();
+
+		m_AcquiredDesktopImage->Release();
+		m_AcquiredDesktopImage = nullptr;
 
 		auto now2 = std::chrono::system_clock().now();
 		auto elapsedTime = std::chrono::duration_cast<std::chrono::milliseconds>(now2 - now).count();
@@ -319,11 +388,6 @@ void DesktopDuplicationCapture::StartCapture()
 			std::this_thread::sleep_for(std::chrono::milliseconds(screenCaptureTime - elapsedTime));
 			std::cout << "Waited:" << std::to_string(screenCaptureTime - elapsedTime) << std::endl;
 		}
-
-		hr = m_DeskDupl->ReleaseFrame();
-
-		m_AcquiredDesktopImage->Release();
-		m_AcquiredDesktopImage = nullptr;
 	}
 
 	m_DeskDupl->Release();
@@ -331,11 +395,11 @@ void DesktopDuplicationCapture::StartCapture()
 
 }
 
-std::vector<uint8_t> DesktopDuplicationCapture::GetData(uint8_t* data, uint16_t height, uint16_t width)
+void DesktopDuplicationCapture::SetScreenShotData(uint8_t* data, uint16_t height, uint16_t width)
 {
 
-	std::vector<uint8_t> result;
-
+	screenShotData.clear();
+	screenShotData.reserve(height * width * 3);
 	auto begin = data;
 
 	for (int y = 0; y< height; y++)
@@ -346,9 +410,9 @@ std::vector<uint8_t> DesktopDuplicationCapture::GetData(uint8_t* data, uint16_t 
 			auto r = begin++;
 			auto reserved = begin++;
 
-			result.push_back(*r);
-			result.push_back(*g);
-			result.push_back(*b);
+			screenShotData.push_back(*r);
+			screenShotData.push_back(*g);
+			screenShotData.push_back(*b);
 
 		}
 	}
@@ -363,5 +427,4 @@ std::vector<uint8_t> DesktopDuplicationCapture::GetData(uint8_t* data, uint16_t 
 	//dump.write(reinterpret_cast<char*>(data), width * height * 3);
 	//dump.close();
 
-	return result;
 }

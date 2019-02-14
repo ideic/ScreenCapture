@@ -9,7 +9,9 @@ private:
 	uint8_t _frameRate;
 	bool _terminate;
 	FFMpegVideoEncoder _encoder;
-	std::vector<uint8_t> GetData(uint8_t* data, uint16_t height, uint16_t width);
+	std::vector<uint8_t> screenShotData;
+
+	void SetScreenShotData(uint8_t* data, uint16_t height, uint16_t width);
 
 public:
 	DesktopDuplicationCapture(uint8_t framrate, std::string output);

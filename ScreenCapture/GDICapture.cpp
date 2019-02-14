@@ -15,8 +15,8 @@ GDICapture::~GDICapture()
 
 void GDICapture::StartCapture()
 {
-	int nScreenWidth = GetSystemMetrics(SM_CXVIRTUALSCREEN);
-	int nScreenHeight = GetSystemMetrics(SM_CYVIRTUALSCREEN);
+	int nScreenWidth = GetSystemMetrics(SM_CXSCREEN); //SM_CXVIRTUALSCREEN
+	int nScreenHeight = GetSystemMetrics(SM_CYSCREEN); // SM_CYVIRTUALSCREEN
 
 	_encoder.Init(nScreenWidth, nScreenHeight, _frameRate, nScreenWidth * nScreenHeight * _frameRate / 60, _output);
 
@@ -37,10 +37,24 @@ void GDICapture::StartCapture()
 		std::cout << time.Since(now) << " Screen shot done. Start Encode " << std::endl;
 		//SaveBitmap(hCaptureBitmap);
 
-		auto bitmap = GetBitMap(hCaptureBitmap);
+		CURSORINFO cursor = { sizeof(cursor) };
+		::GetCursorInfo(&cursor);
+		if (cursor.flags == CURSOR_SHOWING) {
+			RECT rcWnd;
+			::GetWindowRect(hDesktopWnd, &rcWnd);
+			ICONINFOEXW info = { sizeof(info) };
+			::GetIconInfoExW(cursor.hCursor, &info);
+			const int x = cursor.ptScreenPos.x - rcWnd.left  - info.xHotspot;
+			const int y = cursor.ptScreenPos.y - rcWnd.top - info.yHotspot;
+			BITMAP bmpCursor = { 0 };
+			::GetObject(info.hbmColor, sizeof(bmpCursor), &bmpCursor);
+			::DrawIconEx(hCaptureDC, x, y, cursor.hCursor, bmpCursor.bmWidth, bmpCursor.bmHeight, 0, NULL, DI_NORMAL);
+		}
+		//
+		SetScreenShotData(hCaptureBitmap);
 		std::cout << time.Since(now) << "Screen shot transcoded" << std::endl;
 
-		_encoder.AddFrame(bitmap.data());
+		_encoder.AddFrame(screenShotData.data());
 
 		std::cout << time.Since(now) << " Encode Done " << std::endl;
 
@@ -124,14 +138,14 @@ void GDICapture::SaveBitmap(HBITMAP hBitmap)
 
 }
 
-std::vector<uint8_t> GDICapture::GetBitMap(HBITMAP hBitmap)
+void GDICapture::SetScreenShotData(HBITMAP hBitmap)
 {
 	HDC					hdc = NULL;
 	LPVOID				pBuf = NULL;
 	BITMAPINFO			bmpInfo;
 	BITMAPFILEHEADER	bmpFileHeader;
 
-	std::vector<uint8_t> result;
+	screenShotData.clear();
 
 	hdc = GetDC(NULL);
 	ZeroMemory(&bmpInfo, sizeof(BITMAPINFO));
@@ -166,9 +180,9 @@ std::vector<uint8_t> GDICapture::GetBitMap(HBITMAP hBitmap)
 			auto r = begin + shift+ 2;//		 -- g
 			//auto reserved = *(begin + (4 * x )+ 3); //b --
 			
-			result.push_back(*r); 
-			result.push_back(*g); 
-			result.push_back(*b); 
+			screenShotData.push_back(*r);
+			screenShotData.push_back(*g);
+			screenShotData.push_back(*b);
 
 		}
 	}
@@ -188,6 +202,4 @@ std::vector<uint8_t> GDICapture::GetBitMap(HBITMAP hBitmap)
 
 	if (pBuf)
 		free(pBuf);
-
-	return result;
 }

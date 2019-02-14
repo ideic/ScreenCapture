@@ -12,8 +12,8 @@ private:
 
 	void SaveBitmap(HBITMAP hBitmap);
 	FFMpegVideoEncoder _encoder;
-
-	std::vector<uint8_t> GetBitMap(HBITMAP hBitmap);
+	std::vector<uint8_t> screenShotData;
+	void SetScreenShotData(HBITMAP hBitmap);
 public:
 	GDICapture(uint8_t framrate, std::string output);
 	~GDICapture();

@@ -73,13 +73,13 @@ void DirectX(int frameRate)
 
 int main()
 {
-	int framrate = 6;
+	int framrate = 7;
 
 	//Intel(framrate, output);
-	//GDI(framrate);
+	GDI(framrate);
 
 	//DirectX(framrate);
-	DesktopDuplication(framrate);
+	//DesktopDuplication(framrate);
 
 	std::cout << "Finished" << std::endl;
 	std::cin.ignore();

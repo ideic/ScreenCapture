@@ -104,10 +104,10 @@ void FFMpegVideoEncoder::AddFrame(uint8_t * data)
 	}
 
 	if (!_swsCtx) {
-		_swsCtx = sws_getContext(_codecCtx->width, _codecCtx->height, AV_PIX_FMT_RGB24, _codecCtx->width, _codecCtx->height, AV_PIX_FMT_YUV420P, SWS_BICUBIC, 0, 0, 0);  //AV_PIX_FMT_RGB24
+		_swsCtx = sws_getContext(_codecCtx->width, _codecCtx->height, AV_PIX_FMT_BGRA, _codecCtx->width, _codecCtx->height, AV_PIX_FMT_YUV420P, SWS_BICUBIC, 0, 0, 0);  //AV_PIX_FMT_RGB24
 	}
 
-	int inLinesize[1] = { 3 * _codecCtx->width };
+	int inLinesize[1] = { 4 * _codecCtx->width };
 
 	// From RGB to YUV
 	sws_scale(_swsCtx, (const uint8_t * const *)&data, inLinesize, 0, _codecCtx->height, _videoFrame->data, _videoFrame->linesize);

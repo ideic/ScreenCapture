@@ -26,7 +26,7 @@ void Intel(int frameRate)
 
 void GDI(int frameRate)
 {
-	std::string output = "d:\\Idei\\POC\\ScreenCapture\\output\\result_GDI.h264";
+	std::string output = "result_GDI.h264";
 
 	GDICapture capture(frameRate, output);
 
@@ -73,9 +73,9 @@ void DirectX(int frameRate)
 
 int main()
 {
-	int framrate = 7;
+	int framrate = 2;
 
-	//Intel(framrate, output);
+	//Intel(framrate);
 	GDI(framrate);
 
 	//DirectX(framrate);

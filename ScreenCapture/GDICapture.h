@@ -2,7 +2,8 @@
 #include <string>
 #include <Windows.h>
 #include <vector>
-#include "FFMpegVideoEncoder.h"
+//#include "FFMpegVideoEncoder.h"
+#include "IPPVideoEncoder.h"
 class GDICapture
 {
 private:
@@ -11,8 +12,9 @@ private:
 	bool _terminate;
 
 	void SaveBitmap(HBITMAP hBitmap);
-	FFMpegVideoEncoder _encoder;
-	std::vector<uint8_t> screenShotData;
+	//FFMpegVideoEncoder _encoder;
+	IPPVideoEncoder _encoder;
+	uint8_t* screenShotData;
 	void SetScreenShotData(HBITMAP hBitmap);
 public:
 	GDICapture(uint8_t framrate, std::string output);

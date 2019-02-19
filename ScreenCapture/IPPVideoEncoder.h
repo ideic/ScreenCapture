@@ -5,6 +5,7 @@
 #include "mfxvideo.h"   /* The SDK include file */ 
 #include "mfxvideo++.h" /* Optional for C++ development */ 
 #include "mfxplugin.h" /* Plugin development */ 
+#include <chrono>
 class IPPVideoEncoder
 {
 private:
@@ -17,6 +18,7 @@ private:
 	mfxFrameSurface1** _pmfxSurfaces;
 	mfxU16 _numSurfaces;
 	mfxU64 _bufferSize;
+	std::chrono::time_point<std::chrono::system_clock> _initTime;
 
 	void ResetStream(mfxU16 numberofSuggestedFrame, mfxU64 bufferSize);
 	void ResetStream();

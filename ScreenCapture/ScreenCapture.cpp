@@ -26,7 +26,7 @@ void Intel(int frameRate)
 
 void GDI(int frameRate)
 {
-	std::string output = "result_GDI.h264";
+	std::string output = "d:\\Idei\\POC\\ScreenCapture\\output\\result_GDI.h264";
 
 	GDICapture capture(frameRate, output);
 
@@ -73,13 +73,20 @@ void DirectX(int frameRate)
 
 int main()
 {
-	int framrate = 2;
+	try
+	{
+		int framrate = 7;
 
-	//Intel(framrate);
-	GDI(framrate);
+		//Intel(framrate);
+		GDI(framrate);
 
-	//DirectX(framrate);
-	//DesktopDuplication(framrate);
+		//DirectX(framrate);
+		//DesktopDuplication(framrate);
+	}
+	catch (const std::exception& e)
+	{
+		std::cerr << "Runtime error" << e.what() << std::endl;
+	}
 
 	std::cout << "Finished" << std::endl;
 	std::cin.ignore();

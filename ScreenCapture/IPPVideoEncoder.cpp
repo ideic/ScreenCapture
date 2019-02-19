@@ -36,13 +36,13 @@ void IPPVideoEncoder::ConfigureH264Params(int width, int height, int fpsrate, in
 
 	_videoParam.IOPattern = MFX_IOPATTERN_IN_SYSTEM_MEMORY;
 	_videoParam.mfx.CodecId = MFX_CODEC_AVC;
-	_videoParam.mfx.TargetUsage = MFX_TARGETUSAGE_BALANCED;// BEST_QUALITY;
+	_videoParam.mfx.TargetUsage = MFX_TARGETUSAGE_BEST_QUALITY;
 	_videoParam.mfx.TargetKbps = 512;
 
 	// For encoder, Width must be a multiple of 16
 	// Height must be a multiple of 16 in case of frame picture and a multiple of 32 in case of field picture
 	_videoParam.mfx.FrameInfo.Width = width;
-	_videoParam.mfx.FrameInfo.Height = height +8;
+	_videoParam.mfx.FrameInfo.Height = height+8;
 	_videoParam.mfx.FrameInfo.CropW = width;
 	_videoParam.mfx.FrameInfo.CropH = height;
 	_videoParam.mfx.FrameInfo.FourCC = MFX_FOURCC_NV12;
@@ -75,9 +75,11 @@ void IPPVideoEncoder::CreateSurfaces()
 		throw std::runtime_error("MFXFrameAllocator failed with code" + std::to_string(res));
 	}
 
+	mfxU16 width = _videoParam.mfx.FrameInfo.Width;
+	mfxU16 height = _videoParam.mfx.FrameInfo.CropH;
 
 
-	mfxU32 surfaceSize = _videoParam.mfx.FrameInfo.Width * _videoParam.mfx.FrameInfo.CropH + _videoParam.mfx.FrameInfo.CropH * _videoParam.mfx.FrameInfo.CropH /2;
+	mfxU32 surfaceSize = width * height + width * height /2;
 	mfxU8* surfaceBuffers = (mfxU8*) new mfxU8[surfaceSize * _numSurfaces];
 
 
@@ -90,9 +92,9 @@ void IPPVideoEncoder::CreateSurfaces()
 		memcpy(&(_pmfxSurfaces[i]->Info), &(_videoParam.mfx.FrameInfo),	sizeof(mfxFrameInfo));
 
 		_pmfxSurfaces[i]->Data.Y = &surfaceBuffers[surfaceSize * i];
-		_pmfxSurfaces[i]->Data.U = _pmfxSurfaces[i]->Data.Y + _videoParam.mfx.FrameInfo.Width * _videoParam.mfx.FrameInfo.CropH;
-		_pmfxSurfaces[i]->Data.V = _pmfxSurfaces[i]->Data.U + 1;
-		_pmfxSurfaces[i]->Data.Pitch = _videoParam.mfx.FrameInfo.Width;
+		_pmfxSurfaces[i]->Data.CbCr = _pmfxSurfaces[i]->Data.Y + width * height;
+		//_pmfxSurfaces[i]->Data.V = _pmfxSurfaces[i]->Data.U + 1;
+		_pmfxSurfaces[i]->Data.Pitch = width;
 
 		//_pmfxSurfaces[i]->Data.MemId = mfxResponse.mids[i];
 	}
@@ -126,6 +128,8 @@ void IPPVideoEncoder::Init(int width, int height, int fpsrate, int bitrate, std:
 		std::cout << "Failed to open file" << strerror(errno) << std::endl;
 		return;
 	}
+
+	_initTime = std::chrono::system_clock::now();
 }
 
 void IPPVideoEncoder::AddFrame(uint8_t * data)
@@ -155,13 +159,14 @@ void IPPVideoEncoder::AddFrame(uint8_t * data)
 
 	auto status = ippiBGRToYCbCr420_8u_AC4P2R(data, srcStep, inSurface->Data.Y, width, inSurface->Data.CbCr, width, roiSize);
 
+	inSurface->Data.TimeStamp = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - _initTime).count() *90;
 
 	auto res = MFXVideoENCODE_EncodeFrameAsync(_session, NULL, inSurface, &_stream, &_syncpH264);
 
-	if (res == MFX_ERR_MORE_DATA)
-	{
-		res = MFXVideoENCODE_EncodeFrameAsync(_session, NULL, NULL, &_stream, &_syncpH264);
-	}
+	//if (res == MFX_ERR_MORE_DATA)
+	//{
+	//	res = MFXVideoENCODE_EncodeFrameAsync(_session, NULL, NULL, &_stream, &_syncpH264);
+	//}
 
 	if (res != MFX_ERR_MORE_DATA) {
 
